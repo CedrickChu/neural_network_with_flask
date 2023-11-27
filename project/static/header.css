@@ -1,0 +1,139 @@
+.header{
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+.header-items{
+    display: none;
+}
+
+.header-menu-button{
+    color: var(--clr-light);
+    width: var(--size-2xl);
+    height: var(--size-2xl);
+    display: block;
+}
+
+/* xs
+@media (min-width: 475px) {
+    
+}
+
+/*  sm */
+/* @media (min-width: 640px) {
+   
+} */
+
+
+
+/*  md */
+@media (min-width: 768px) {
+    .header-items{
+    display: flex;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    gap: 2em;
+    }
+    .header-link{
+        font-size: var(--size-xs);
+        color: var(--clr-light);
+        text-decoration: none;
+        letter-spacing: -0.05em;
+    }
+    .header-link:hover{
+        color: var(--clr-red);
+        transition: color 0.4s;
+    }
+    .theme_mode{
+        width: var(--size-base);
+        height: var(--size-base);
+        color: white;
+        display: inline-block;
+    }
+    .seperator{
+        border: .5px solid var(--clr-light);
+        padding-top: 1.5em;
+    }
+    .header-menu-button{
+        display: none;
+    }
+   
+    #mySidebar{
+        display: none;
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        padding: 30px 0 0;
+        background-color: rgb(29, 29, 29);
+        width: 200px!important;
+        z-index: 999999999;
+        overflow: hidden;
+        
+    }
+    .sidebar {
+        height: 100%;
+        width: 200px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: var(--clr-slate700);
+        padding-top: 20px;
+      }
+  
+      .sidebar a {
+        padding: 10px;
+        text-decoration: none;
+        font-size: 18px;
+        color: #fff;
+        display: block;
+        text-align: center;
+      }
+  
+      .sidebar a:hover {
+        background-color: var(--clr-slate800);
+      }
+  
+      .content {
+        margin-left: 200px;
+        padding: 20px;
+      }
+      .menu-button {
+        font-size: 20px;
+        cursor: pointer;
+        position: fixed;
+      }
+      #overlay {
+        position: fixed;
+        display: none;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 2;
+        cursor: pointer;
+        }
+        
+    
+} 
+
+
+/*  lg */
+/* @media (min-width: 1024px) {
+    
+} */
+/*  xL */
+/* @media (min-width: 1280px) {
+    
+} */
+
+
+ /* xxL
+/* @media (min-width: 1536px) {
+  
+}  */

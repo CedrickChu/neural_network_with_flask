@@ -1,0 +1,30 @@
+{% extends 'base.html' %}  
+{% block body %}
+<div class="content-center text-center">
+    <div class="container">
+        <h1 class='text-left'>Dashboard</h1>
+        <div class='row d-flex align-items-stretch'>
+            <div class='col-md-6'>
+                <div class="card h-100" id='piechart'>
+                    <div class="card-body">
+                        <div class="visualization">
+                            <h2>Spam vs. Regular Messages</h2>
+                            <img src="data:image/png;base64,{{ img_base64_pie }}" alt="Spam vs. Regular Messages Pie Chart" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class='col-md-6'>
+                <div class="card h-100" id='histogram'>
+                    <div class="card-body">
+                        <div class="visualization">
+                            <h2>Histogram</h2>
+                            <img src="data:image/png;base64,{{ img_base64_hist }}" alt="Histogram" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,21 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Training Progress</title>
-</head>
-<body>
-    <h1>Training Progress</h1>
+{% extends 'base.html' %}  
+{% block body %}
+<div class='content-center text-center'>
+    <h1 class='text-center'>Training Progress</h1>
     <ul id="progress-list"></ul>
-
-    <button id="start-training">Start Training</button>
-    <img src="data:image/png;base64,{{ img_base64 }}" alt="Training History">
+    <button class='btn btn-fill btn-danger' id="start-training">Start Training</button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
     <script>
         const socket = io.connect('http://' + document.domain + ':' + location.port);
-
         socket.on('connect', function() {
             console.log('Connected to server');
         });
@@ -33,7 +24,7 @@
         });
 
         const startTrainingButton = document.getElementById('start-training');
-    
+
         startTrainingButton.addEventListener('click', function() {
             socket.emit('update', 'Training started...');
             fetch('/run_model', {
@@ -41,7 +32,6 @@
             }).then(response => {
                 if (response.ok) {
                     console.log('Training request sent successfully');
-                    // Redirect to the results page after training is completed
                     window.location.href = '/result';
                 } else {
                     console.error('Failed to send training request');
@@ -51,5 +41,5 @@
             });
         });
     </script>
-</body>
-</html>
+</div>
+{% endblock %}

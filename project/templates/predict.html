@@ -1,0 +1,39 @@
+{% extends 'base.html' %}  
+{% block body %}
+    <div class='text-center'>
+        <h1>Spam Detection</h1>
+        <form id="predictForm">
+            <label for="user_input_text">Enter Message:</label>
+            <input class='form-control' style='width: 80%; margin:auto;' type="text" id="user_input_text" name="user_input_text" required>
+            <br><button class='btn btn-fill btn-danger' type="button" onclick="predict()">Predict</button>
+        </form>
+
+        <div id="prediction_result"></div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+        <script>
+            var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            function predict() {
+                var user_input_text = document.getElementById('user_input_text').value;
+
+                var formData = new FormData();
+                formData.append('user_input_text', user_input_text);
+
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(result => {
+                    document.getElementById('prediction_result').innerHTML = '<p>' + result.prediction + '</p><p>' + result.spam_probability + '</p>';
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+            socket.on('prediction_result', function(result) {
+                document.getElementById('prediction_result').innerHTML = '<p>' + result.prediction + '</p><p>' + result.spam_probability + '</p>';
+            });
+        </script>
+    </div>
+{% endblock %}
