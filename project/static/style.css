@@ -110,3 +110,9 @@ table {
 #histogram, #piechart{
     height: 670px!important;
 }
+.jp-RenderedText pre, .jp-Notebook .jp-Cell:not(.jp-mod-active) .jp-InputPrompt{
+    color: white !important;
+}
+.jp-RenderedHTMLCommon{
+    color: white!important;
+}

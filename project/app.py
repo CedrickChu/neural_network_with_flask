@@ -12,6 +12,11 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+import re
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
 from sklearn.model_selection import train_test_split
 from io import BytesIO
 from sklearn.feature_extraction.text import CountVectorizer
@@ -19,6 +24,8 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
 from imblearn.over_sampling import RandomOverSampler
 import matplotlib
+import nbformat
+from nbconvert import HTMLExporter
 
 matplotlib.use('Agg')
 
@@ -31,7 +38,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 
 # Load the trained model
-model = load_model('spam_classifier_model.h5')
+model = load_model('my_model.keras')
 
 with open('vectorizer.joblib', 'rb') as file:
     vectorizer = joblib.load(file)
@@ -62,6 +69,16 @@ def predict():
         return render_template('predict.html', result=result)
 
     return render_template('predict.html')
+
+@app.route('/jupyter')
+def jupyter():
+    with open('email-spam-prediction-97.ipynb', 'r') as f:
+        notebook_content = nbformat.read(f, as_version=4)
+
+    html_exporter = HTMLExporter()
+    html_body, _ = html_exporter.from_notebook_node(notebook_content)
+
+    return render_template('jupyter.html', notebook_html=html_body)
 
 @app.route('/')
 def dashboard():
@@ -177,35 +194,45 @@ def handle_disconnect():
 @socketio.on('update')
 def send_update(data):
     socketio.emit('message', {'data': data})
+    
 
 @app.route('/run_model', methods=['POST'])
 def run_model():
+    # Load data
     df = pd.read_csv('spam_dataset.csv', skiprows=1, names=['label', 'text'])
     df['label'] = df['label'].map({'spam': 1, 'ham': 0})
-
-    train_data, test_data, train_labels, test_labels = train_test_split(
-        df['text'], df['label'], test_size=0.3, random_state=100
+    
+    
+    # Split the data into training, testing, and cross-validation sets
+    train_data, temp_data, train_labels, temp_labels = train_test_split(
+        df['text'], df['label'], test_size=0.2, random_state=100
     )
 
+    test_data, cv_data, test_labels, cv_labels = train_test_split(
+        temp_data, temp_labels, test_size=0.5, random_state=100
+    )
+
+    # Vectorize the text data
     vectorizer = CountVectorizer(max_features=400)
     train_data_numeric = vectorizer.fit_transform(train_data).toarray()
     test_data_numeric = vectorizer.transform(test_data).toarray()
 
+    # Resample the training data to handle class imbalance
     ros = RandomOverSampler(random_state=42)
     train_data_resampled, train_labels_resampled = ros.fit_resample(train_data_numeric, train_labels)
 
+    # Save the vectorizer for future use
     joblib.dump(vectorizer, 'vectorizer.joblib')
 
+    # Normalize the data
     scaler = MinMaxScaler()
     train_data_normalized = scaler.fit_transform(train_data_resampled)
     test_data_normalized = scaler.transform(test_data_numeric)
 
-    class_weights = {
-        0: 1.0,
-        1: 1.5
-    }
+    # Define class weights
+    class_weights = {0: 1.0, 1: 1.3}
 
-    tf.random.set_seed(1234)
+    # Build the neural network model
     model = Sequential([
         Dense(128, activation='relu', input_shape=(400,), name="L1"),
         Dropout(0.5),
@@ -216,17 +243,20 @@ def run_model():
         Dense(1, activation='sigmoid', name="Output"),
     ], name="my_model")
 
+    # Define the learning rate schedule
     initial_learning_rate = 0.0001
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate, decay_steps=10000, decay_rate=0.9, staircase=True
     )
 
+    # Compile the model
     model.compile(
         loss=tf.keras.losses.BinaryCrossentropy(),
-        optimizer=tf.keras.optimizers.Adam(learning_rate=lr_schedule),
+        optimizer=Adam(learning_rate=lr_schedule),
         metrics=['accuracy']
     )
 
+    # Define callbacks
     early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
 
     model_checkpoint = ModelCheckpoint(
@@ -238,9 +268,9 @@ def run_model():
         verbose=1
     )
 
+    # Train the model
     batch_size = 65
     steps_per_epoch = len(train_data_normalized) // batch_size
-
     epochs = 40
     history_list = []
 
@@ -259,24 +289,27 @@ def run_model():
 
         history_list.append(history.history)
 
+    # Save training history
     with open('training_history.pkl', 'wb') as file:
         pickle.dump(history_list, file)
 
-    test_data_resampled, test_labels_resampled = ros.fit_resample(test_data_normalized, test_labels)
-
+    # Make predictions on training and testing data
     train_pred_prob = model.predict(train_data_resampled)
-    test_pred_prob = model.predict(test_data_resampled)
+    test_pred_prob = model.predict(test_data_normalized)
 
     train_pred = (train_pred_prob > 0.5).astype(int)
     test_pred = (test_pred_prob > 0.5).astype(int)
 
+    # Calculate accuracy scores
     train_accuracy = accuracy_score(train_labels_resampled, train_pred)
-    test_accuracy = accuracy_score(test_labels_resampled, test_pred)
+    test_accuracy = accuracy_score(test_labels, test_pred)
 
+    # Emit status and accuracy through socketio
     socketio.emit('status', {'data': 'Training completed'})
     socketio.emit('accuracy', {'train_accuracy': train_accuracy})
     socketio.emit('accuracy', {'test_accuracy': test_accuracy})
 
+    # Render the result template
     return render_template('result.html', train_accuracy=train_accuracy, test_accuracy=test_accuracy)
 
 if __name__ == "__main__":
